@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Portal Grupo Bairral",
+  "description": "Sistema de Gestão, Relatórios e Painel Administrativo do Grupo Bairral",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
