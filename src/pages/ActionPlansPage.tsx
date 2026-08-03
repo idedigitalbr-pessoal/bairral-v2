@@ -15,6 +15,8 @@ import {
   Edit2,
   Eye,
   ShieldAlert,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { Surface } from '../components/ui/Surface';
 import { Typography } from '../components/ui/Typography';
@@ -37,6 +39,7 @@ import { ExportButton } from '../components/ui/ExportButton';
 export function ActionPlansPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'cards' | 'lista'>('cards');
 
   // Modais State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -252,38 +255,66 @@ export function ActionPlansPage() {
         </Surface>
       </div>
 
-      {/* Barra de Filtros */}
-      <Surface variant="card" className="flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#737373]" />
-          <input
-            type="text"
-            placeholder="Buscar por título, protocolo ou responsável..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#FAFAFA] border border-[#E5E5E5] rounded focus:outline-none focus:border-[#004B87]"
-          />
+      {/* Barra de Filtros + Seletor de Modo de Exibição */}
+      <Surface variant="card" className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-3 items-center flex-1">
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#737373]" />
+            <input
+              type="text"
+              placeholder="Buscar por título, protocolo ou responsável..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#FAFAFA] border border-[#E5E5E5] rounded focus:outline-none focus:border-[#004B87]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+            <Filter className="w-3.5 h-3.5 text-[#737373] shrink-0" />
+            <span className="text-xs text-[#737373] shrink-0">Filtrar por Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="text-xs bg-[#FAFAFA] border border-[#E5E5E5] rounded px-2.5 py-1 focus:outline-none focus:border-[#004B87]"
+            >
+              <option value="ALL">Todos os Status</option>
+              <option value="NOT_STARTED">Não Iniciado</option>
+              <option value="IN_PROGRESS">Em Andamento</option>
+              <option value="COMPLETED">Concluído</option>
+              <option value="CANCELLED">Cancelado</option>
+              <option value="OVERDUE">Atrasados</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <Filter className="w-3.5 h-3.5 text-[#737373] shrink-0" />
-          <span className="text-xs text-[#737373] shrink-0">Filtrar por Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs bg-[#FAFAFA] border border-[#E5E5E5] rounded px-2.5 py-1 focus:outline-none focus:border-[#004B87]"
+        {/* Botões do Modo de Visualização (Cards | Lista) */}
+        <div className="flex items-center bg-[#F5F5F5] p-1 rounded-lg border border-[#E5E5E5] self-start sm:self-auto shrink-0">
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              viewMode === 'cards'
+                ? 'bg-white text-[#171717] shadow-sm font-bold'
+                : 'text-[#737373] hover:text-[#171717]'
+            }`}
           >
-            <option value="ALL">Todos os Status</option>
-            <option value="NOT_STARTED">Não Iniciado</option>
-            <option value="IN_PROGRESS">Em Andamento</option>
-            <option value="COMPLETED">Concluído</option>
-            <option value="CANCELLED">Cancelado</option>
-            <option value="OVERDUE">Atrasados</option>
-          </select>
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Cards</span>
+          </button>
+          <button
+            onClick={() => setViewMode('lista')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              viewMode === 'lista'
+                ? 'bg-white text-[#171717] shadow-sm font-bold'
+                : 'text-[#737373] hover:text-[#171717]'
+            }`}
+          >
+            <List className="w-3.5 h-3.5" />
+            <span>Lista</span>
+          </button>
         </div>
       </Surface>
 
-      {/* Grid de Planos de Ação */}
+      {/* Exibição de Planos de Ação (Cards ou Lista) */}
       {isLoading ? (
         <Surface variant="card" className="p-8 text-center text-xs text-[#737373]">
           Carregando planos de ação...
@@ -294,8 +325,8 @@ export function ActionPlansPage() {
           <p className="text-xs font-bold text-[#171717]">Nenhum plano de ação encontrado</p>
           <p className="text-xs text-[#737373]">Ajuste os filtros de busca ou cadastre um novo plano de ação.</p>
         </Surface>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ) : viewMode === 'cards' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map((plan) => {
             const isOverdue = plan.daysOverdue && plan.daysOverdue > 0 && plan.status !== 'COMPLETED';
             return (
@@ -401,6 +432,127 @@ export function ActionPlansPage() {
             );
           })}
         </div>
+      ) : (
+        /* Visualização em Lista / Tabela */
+        <Surface variant="card" className="p-0 overflow-hidden border border-[#E5E5E5]">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E5] text-[#737373] font-semibold">
+                  <th className="py-3 px-4">Protocolo</th>
+                  <th className="py-3 px-4">Título do Plano</th>
+                  <th className="py-3 px-4">Responsável</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 min-w-[140px]">Progresso</th>
+                  <th className="py-3 px-4">Prazo</th>
+                  <th className="py-3 px-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F5F5F5]">
+                {plans.map((plan) => {
+                  const isOverdue = plan.daysOverdue && plan.daysOverdue > 0 && plan.status !== 'COMPLETED';
+                  return (
+                    <tr key={plan.id} className="hover:bg-[#FAFAFA] transition-colors">
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="font-mono text-[10px] font-bold bg-[#F5F5F5] border border-[#E5E5E5] px-2 py-0.5 rounded text-[#004B87]">
+                          {plan.reportProtocol || 'Sem protocolo'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#0A0A0A] line-clamp-1">{plan.title}</div>
+                        <div className="text-[11px] text-[#737373] line-clamp-1">{plan.description}</div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap text-[#262626]">
+                        {plan.responsibleName}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Badge
+                            variant={
+                              plan.status === 'COMPLETED'
+                                ? 'success'
+                                : plan.status === 'IN_PROGRESS'
+                                ? 'info'
+                                : plan.status === 'CANCELLED'
+                                ? 'danger'
+                                : 'secondary'
+                            }
+                            size="sm"
+                          >
+                            {plan.status === 'COMPLETED'
+                              ? 'Concluído'
+                              : plan.status === 'IN_PROGRESS'
+                              ? 'Em Andamento'
+                              : plan.status === 'CANCELLED'
+                              ? 'Cancelado'
+                              : 'Não Iniciado'}
+                          </Badge>
+                          {isOverdue && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] bg-[#FDE8E8] text-[#A80000] font-bold px-1.5 py-0.5 rounded" title={`Atrasado há ${plan.daysOverdue} dias`}>
+                              <AlertTriangle className="w-3 h-3" /> {plan.daysOverdue}d
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="w-full max-w-[120px] space-y-1">
+                          <div className="flex justify-between text-[10px] text-[#737373]">
+                            <span>{plan.progressPercentage}%</span>
+                          </div>
+                          <Progress
+                            value={plan.progressPercentage}
+                            variant={plan.status === 'COMPLETED' ? 'success' : isOverdue ? 'danger' : 'yellow'}
+                          />
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap text-[#525252]">
+                        {plan.dueDate ? new Date(plan.dueDate).toLocaleDateString('pt-BR') : 'N/D'}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-2 py-1 h-auto text-[11px]"
+                            leftIcon={<Eye className="w-3 h-3" />}
+                            onClick={() => {
+                              setSelectedPlan(plan);
+                              setIsDetailModalOpen(true);
+                            }}
+                          >
+                            Detalhes
+                          </Button>
+                          <PermissionGate permission={AdminPermissionEnum.CREATE_ACTION_PLAN}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="px-2 py-1 h-auto text-[11px]"
+                              leftIcon={<Edit2 className="w-3 h-3" />}
+                              onClick={() => handleOpenEdit(plan)}
+                            >
+                              Editar
+                            </Button>
+                            {plan.status !== 'COMPLETED' && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="px-2 py-1 h-auto text-[11px]"
+                                leftIcon={<CheckCircle2 className="w-3 h-3" />}
+                                onClick={() => handleOpenValidate(plan)}
+                              >
+                                Validar
+                              </Button>
+                            )}
+                          </PermissionGate>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Surface>
       )}
 
       {/* Modal: Criar Plano de Ação */}
