@@ -263,8 +263,11 @@ export const dashboardMetricsSchema = z.object({
     z.object({
       date: z.string(),
       label: z.string(),
-      count: z.number(),
-      resolved: z.number(),
+      count: z.number().optional(),
+      resolved: z.number().optional(),
+      abertos: z.number().optional(),
+      recentes: z.number().optional(),
+      concluidas: z.number().optional(),
     })
   ),
   reportsByStatus: z.record(z.nativeEnum(ReportStatusEnum), z.number()),

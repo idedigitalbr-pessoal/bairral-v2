@@ -189,6 +189,7 @@ export function AdminPage() {
   // Preparação de dados para Gráficos
   const statusChartData = metrics
     ? Object.entries(metrics.reportsByStatus || {}).map(([statusKey, count]) => ({
+        statusKey,
         status: statusLabels[statusKey] || statusKey,
         count,
       }))
@@ -196,6 +197,7 @@ export function AdminPage() {
 
   const riskChartData = metrics
     ? Object.entries(metrics.reportsByRisk || {}).map(([riskKey, count]) => ({
+        riskKey,
         risk: riskLabels[riskKey] || riskKey,
         count,
         color: riskColors[riskKey] || '#6B7280',
@@ -503,28 +505,94 @@ export function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Gráfico 1: Volume por Período */}
               <Surface variant="card" className="p-5">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div>
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Volume de Manifestações por Período
+                      <span className="text-[10px] font-normal bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded-full border border-[#FCD34D]">
+                        🖱️ Clicável
+                      </span>
                     </Typography>
-                    <p className="text-xs text-[#737373]">Evolução diária de novos relatos e casos resolvidos</p>
+                    <p className="text-xs text-[#737373]">Evolução diária em aberto, recentes e concluídas</p>
                   </div>
-                  <BarChart3 className="w-5 h-5 text-[#D97706]" />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => navigate('/admin/manifestacoes?filtro=abertos')}
+                      className="text-[11px] px-2 py-1 rounded bg-[#E0F2FE] text-[#0369A1] hover:bg-[#BAE6FD] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Filtrar Em Aberto"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-[#0284C7]" /> Aberto
+                    </button>
+                    <button
+                      onClick={() => navigate('/admin/manifestacoes?filtro=recentes')}
+                      className="text-[11px] px-2 py-1 rounded bg-[#FEF3C7] text-[#92400E] hover:bg-[#FDE68A] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Filtrar Recentes"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Recentes
+                    </button>
+                    <button
+                      onClick={() => navigate('/admin/manifestacoes?filtro=concluidos')}
+                      className="text-[11px] px-2 py-1 rounded bg-[#DCFCE7] text-[#15803D] hover:bg-[#BBF7D0] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Filtrar Concluídas"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-[#16A34A]" /> Concluídas
+                    </button>
+                  </div>
                 </div>
                 {metrics.periodVolume && metrics.periodVolume.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={metrics.periodVolume}>
+                      <AreaChart
+                        data={metrics.periodVolume}
+                        onClick={(state: any) => {
+                          if (state?.activePayload?.[0]) {
+                            navigate('/admin/manifestacoes?filtro=abertos');
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
                         <XAxis dataKey="label" stroke="#737373" fontSize={11} />
                         <YAxis stroke="#737373" fontSize={11} allowDecimals={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any, name: any) => [`${value} manifestações (Clique para filtrar)`, name]}
                         />
-                        <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                        <Area type="monotone" dataKey="count" name="Novas Manifestações" stroke="#FDC503" fill="#FFF4C2" strokeWidth={2} />
-                        <Area type="monotone" dataKey="resolved" name="Resolvidas" stroke="#16A34A" fill="#DCFCE7" strokeWidth={2} />
+                        <Legend
+                          wrapperStyle={{ fontSize: '12px', paddingTop: '8px', cursor: 'pointer' }}
+                          onClick={(e: any) => {
+                            if (e && e.dataKey === 'abertos') navigate('/admin/manifestacoes?filtro=abertos');
+                            if (e && e.dataKey === 'recentes') navigate('/admin/manifestacoes?filtro=recentes');
+                            if (e && e.dataKey === 'concluidas') navigate('/admin/manifestacoes?filtro=concluidos');
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="abertos"
+                          name="Em Aberto"
+                          stroke="#0284C7"
+                          fill="#E0F2FE"
+                          strokeWidth={2.5}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="recentes"
+                          name="Recentes"
+                          stroke="#D97706"
+                          fill="#FEF3C7"
+                          strokeWidth={2.5}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="concluidas"
+                          name="Concluídas"
+                          stroke="#16A34A"
+                          fill="#DCFCE7"
+                          strokeWidth={2.5}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -537,24 +605,48 @@ export function AdminPage() {
               <Surface variant="card" className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Distribuição por Categoria
+                      <span className="text-[10px] font-normal bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded-full border border-[#FCD34D]">
+                        🖱️ Clique na barra
+                      </span>
                     </Typography>
-                    <p className="text-xs text-[#737373]">Volume total categorizado conforme a taxonomia ética</p>
+                    <p className="text-xs text-[#737373]">Clique em qualquer categoria para listar os chamados</p>
                   </div>
                   <PieChartIcon className="w-5 h-5 text-[#D97706]" />
                 </div>
                 {metrics.reportsByCategory && metrics.reportsByCategory.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart layout="vertical" data={metrics.reportsByCategory}>
+                      <BarChart
+                        layout="vertical"
+                        data={metrics.reportsByCategory}
+                        onClick={(state: any) => {
+                          if (state?.activePayload?.[0]?.payload) {
+                            const item = state.activePayload[0].payload;
+                            if (item?.categoryId) {
+                              navigate(`/admin/manifestacoes?categoryId=${item.categoryId}`);
+                            } else if (item?.categoryName) {
+                              navigate(`/admin/manifestacoes?categoryName=${encodeURIComponent(item.categoryName)}`);
+                            }
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
                         <XAxis type="number" stroke="#737373" fontSize={11} allowDecimals={false} />
                         <YAxis dataKey="categoryName" type="category" stroke="#737373" fontSize={10} width={130} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any) => [`${value} casos (Clique para filtrar)`, 'Quantidade']}
                         />
-                        <Bar dataKey="count" name="Quantidade" fill="#D97706" radius={[0, 4, 4, 0]} />
+                        <Bar
+                          dataKey="count"
+                          name="Quantidade"
+                          fill="#D97706"
+                          radius={[0, 4, 4, 0]}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -570,23 +662,38 @@ export function AdminPage() {
               <Surface variant="card" className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Manifestações por Status no Fluxo
+                      <span className="text-[10px] font-normal bg-[#E0F2FE] text-[#0369A1] px-2 py-0.5 rounded-full border border-[#BAE6FD]">
+                        🖱️ Clicável
+                      </span>
                     </Typography>
-                    <p className="text-xs text-[#737373]">Quantidade de casos em cada etapa da governança</p>
+                    <p className="text-xs text-[#737373]">Clique na etapa para abrir a lista filtrada correspondente</p>
                   </div>
                 </div>
                 {statusChartData.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statusChartData}>
+                      <BarChart
+                        data={statusChartData}
+                        onClick={(state: any) => {
+                          if (state?.activePayload?.[0]?.payload) {
+                            const item = state.activePayload[0].payload;
+                            if (item?.statusKey) {
+                              navigate(`/admin/manifestacoes?status=${item.statusKey}`);
+                            }
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
                         <XAxis dataKey="status" stroke="#737373" fontSize={10} angle={-25} textAnchor="end" height={50} />
                         <YAxis stroke="#737373" fontSize={11} allowDecimals={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any) => [`${value} manifestações (Clique para ver)`, 'Quantidade']}
                         />
-                        <Bar dataKey="count" name="Manifestações" fill="#0284C7" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" name="Manifestações" fill="#0284C7" radius={[4, 4, 0, 0]} className="cursor-pointer hover:opacity-80 transition-opacity" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -599,23 +706,38 @@ export function AdminPage() {
               <Surface variant="card" className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Classificação por Nível de Risco
+                      <span className="text-[10px] font-normal bg-[#FEE2E2] text-[#991B1B] px-2 py-0.5 rounded-full border border-[#FCA5A5]">
+                        🖱️ Clicável
+                      </span>
                     </Typography>
-                    <p className="text-xs text-[#737373]">Matriz de severidade e urgência operacional</p>
+                    <p className="text-xs text-[#737373]">Clique na barra de risco para abrir os casos daquele nível</p>
                   </div>
                 </div>
                 {riskChartData.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={riskChartData}>
+                      <BarChart
+                        data={riskChartData}
+                        onClick={(state: any) => {
+                          if (state?.activePayload?.[0]?.payload) {
+                            const item = state.activePayload[0].payload;
+                            if (item?.riskKey) {
+                              navigate(`/admin/manifestacoes?riskLevel=${item.riskKey}`);
+                            }
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
                         <XAxis dataKey="risk" stroke="#737373" fontSize={11} />
                         <YAxis stroke="#737373" fontSize={11} allowDecimals={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any) => [`${value} casos (Clique para filtrar)`, 'Quantidade']}
                         />
-                        <Bar dataKey="count" name="Quantidade">
+                        <Bar dataKey="count" name="Quantidade" className="cursor-pointer hover:opacity-80 transition-opacity">
                           {riskChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
@@ -635,23 +757,38 @@ export function AdminPage() {
               <Surface variant="card" className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Manifestações por Unidade Operacional
+                      <span className="text-[10px] font-normal bg-[#EDE9FE] text-[#6D28D9] px-2 py-0.5 rounded-full border border-[#DDD6FE]">
+                        🖱️ Clicável
+                      </span>
                     </Typography>
-                    <p className="text-xs text-[#737373]">Comparativo entre Sede, Mirante e Centro de Convivência</p>
+                    <p className="text-xs text-[#737373]">Clique na unidade para filtrar os relatos daquela localidade</p>
                   </div>
                 </div>
                 {metrics.reportsByUnit && metrics.reportsByUnit.length > 0 ? (
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={metrics.reportsByUnit}>
+                      <BarChart
+                        data={metrics.reportsByUnit}
+                        onClick={(state: any) => {
+                          if (state?.activePayload?.[0]?.payload) {
+                            const item = state.activePayload[0].payload;
+                            if (item?.unitId) {
+                              navigate(`/admin/manifestacoes?unitId=${item.unitId}`);
+                            }
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
                         <XAxis dataKey="unitName" stroke="#737373" fontSize={10} interval={0} />
                         <YAxis stroke="#737373" fontSize={11} allowDecimals={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any) => [`${value} manifestações (Clique para filtrar)`, 'Quantidade']}
                         />
-                        <Bar dataKey="count" name="Manifestações" fill="#7C3AED" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" name="Manifestações" fill="#7C3AED" radius={[4, 4, 0, 0]} className="cursor-pointer hover:opacity-80 transition-opacity" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -664,11 +801,14 @@ export function AdminPage() {
               <Surface variant="card" className="p-5 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A]">
+                    <Typography variant="h3" className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
                       Anônimas vs Identificadas
+                      <span className="text-[10px] font-normal bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded-full border border-[#FCD34D]">
+                        🖱️ Clicável
+                      </span>
                     </Typography>
                   </div>
-                  <p className="text-xs text-[#737373] mb-4">Proporção do tipo de registro escolhido pelo manifestante</p>
+                  <p className="text-xs text-[#737373] mb-4">Clique na fatia desejada para abrir a lista filtrada</p>
                 </div>
                 {registrationTypeData.length > 0 ? (
                   <div className="h-56 w-full flex items-center justify-center">
@@ -682,15 +822,31 @@ export function AdminPage() {
                           outerRadius={80}
                           paddingAngle={5}
                           dataKey="value"
+                          onClick={(entry) => {
+                            if (entry && entry.name) {
+                              const isAnon = entry.name === 'Anônimas';
+                              navigate(`/admin/manifestacoes?registrationType=${isAnon ? 'ANONYMOUS' : 'IDENTIFIED'}`);
+                            }
+                          }}
+                          className="cursor-pointer"
                         >
                           {registrationTypeData.map((entry, index) => (
-                            <Cell key={`cell-pie-${index}`} fill={entry.color} />
+                            <Cell key={`cell-pie-${index}`} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
                           ))}
                         </Pie>
                         <Tooltip
                           contentStyle={{ backgroundColor: '#171717', borderRadius: '6px', color: '#FFF', fontSize: '12px' }}
+                          formatter={(value: any) => [`${value} registros (Clique para filtrar)`, 'Total']}
                         />
-                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Legend
+                          wrapperStyle={{ fontSize: '12px', cursor: 'pointer' }}
+                          onClick={(e: any) => {
+                            if (e && e.value) {
+                              const isAnon = e.value === 'Anônimas';
+                              navigate(`/admin/manifestacoes?registrationType=${isAnon ? 'ANONYMOUS' : 'IDENTIFIED'}`);
+                            }
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>

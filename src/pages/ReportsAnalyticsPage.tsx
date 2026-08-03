@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   Calendar,
@@ -80,6 +81,7 @@ const categoryPerformanceTable = [
 ];
 
 export function ReportsAnalyticsPage() {
+  const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2026');
   const [selectedUnit, setSelectedUnit] = useState<string>('ALL');
 
@@ -284,12 +286,17 @@ export function ReportsAnalyticsPage() {
 
         {/* Gráfico 2: Distribuição por Categoria */}
         <Surface variant="card" className="p-5 space-y-4 border border-[#E5E5E5]">
-          <div className="border-b border-[#F5F5F5] pb-3">
-            <h3 className="text-sm font-bold font-heading text-[#0A0A0A] flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-[#806300]" />
-              Categorias de Manifestações
-            </h3>
-            <p className="text-[11px] text-[#737373]">Distribuição percentual do acervo acumulado</p>
+          <div className="border-b border-[#F5F5F5] pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold font-heading text-[#0A0A0A] flex items-center gap-2">
+                <PieIcon className="w-4 h-4 text-[#806300]" />
+                Categorias de Manifestações
+                <span className="text-[10px] font-normal bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded-full border border-[#FCD34D]">
+                  🖱️ Clicável
+                </span>
+              </h3>
+              <p className="text-[11px] text-[#737373]">Clique na fatia ou na lista para filtrar por categoria</p>
+            </div>
           </div>
 
           <div className="h-52 w-full">
@@ -303,14 +310,20 @@ export function ReportsAnalyticsPage() {
                   outerRadius={75}
                   paddingAngle={4}
                   dataKey="value"
+                  onClick={(entry) => {
+                    if (entry && entry.name) {
+                      navigate(`/admin/manifestacoes?categoryName=${encodeURIComponent(entry.name)}`);
+                    }
+                  }}
+                  className="cursor-pointer"
                 >
                   {categoryDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#171717', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }}
-                  formatter={(value: any) => [`${value} casos`, 'Total']}
+                  formatter={(value: any) => [`${value} casos (Clique para ver)`, 'Total']}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -318,7 +331,11 @@ export function ReportsAnalyticsPage() {
 
           <div className="space-y-1.5 pt-2 border-t border-[#F5F5F5]">
             {categoryDistributionData.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between text-[11px]">
+              <div
+                key={idx}
+                onClick={() => navigate(`/admin/manifestacoes?categoryName=${encodeURIComponent(item.name)}`)}
+                className="flex items-center justify-between text-[11px] cursor-pointer hover:bg-[#F5F5F5] p-1 rounded transition-colors"
+              >
                 <div className="flex items-center gap-2 truncate max-w-[200px]">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-[#262626] font-medium truncate">{item.name}</span>
@@ -338,21 +355,37 @@ export function ReportsAnalyticsPage() {
             <h3 className="text-sm font-bold font-heading text-[#0A0A0A] flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
               Classificação por Nível de Risco
+              <span className="text-[10px] font-normal bg-[#FEE2E2] text-[#991B1B] px-2 py-0.5 rounded-full border border-[#FCA5A5]">
+                🖱️ Clicável
+              </span>
             </h3>
-            <p className="text-[11px] text-[#737373]">Gravidade institucional dos relatos cadastrados</p>
+            <p className="text-[11px] text-[#737373]">Clique no risco para filtrar os relatos correspondentes</p>
           </div>
 
           <div className="h-60 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={riskLevelData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart
+                data={riskLevelData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                onClick={(state: any) => {
+                  if (state?.activePayload?.[0]?.payload) {
+                    const item = state.activePayload[0].payload;
+                    if (item?.level) {
+                      const levelMap: Record<string, string> = { Baixo: 'LOW', Médio: 'MEDIUM', Alto: 'HIGH', Crítico: 'CRITICAL' };
+                      navigate(`/admin/manifestacoes?riskLevel=${levelMap[item.level] || item.level}`);
+                    }
+                  }
+                }}
+                className="cursor-pointer"
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
                 <XAxis dataKey="level" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#737373' }} />
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#737373' }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#171717', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }}
-                  formatter={(value: any) => [`${value} relatos`, 'Quantidade']}
+                  formatter={(value: any) => [`${value} relatos (Clique para filtrar)`, 'Quantidade']}
                 />
-                <Bar dataKey="quantidade" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="quantidade" radius={[6, 6, 0, 0]} className="cursor-pointer hover:opacity-80 transition-opacity">
                   {riskLevelData.map((entry, index) => (
                     <Cell key={`risk-cell-${index}`} fill={entry.fill} />
                   ))}
@@ -368,21 +401,37 @@ export function ReportsAnalyticsPage() {
             <h3 className="text-sm font-bold font-heading text-[#0A0A0A] flex items-center gap-2">
               <Building2 className="w-4 h-4 text-[#004B87]" />
               Desempenho de SLA por Unidade Operacional
+              <span className="text-[10px] font-normal bg-[#E0F2FE] text-[#0369A1] px-2 py-0.5 rounded-full border border-[#BAE6FD]">
+                🖱️ Clicável
+              </span>
             </h3>
-            <p className="text-[11px] text-[#737373]">Tempo médio de apuração em dias comparado à meta de 7.0 dias</p>
+            <p className="text-[11px] text-[#737373]">Clique na unidade para ver todas as manifestações associadas</p>
           </div>
 
           <div className="h-60 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={unitPerformanceData} margin={{ top: 10, right: 20, left: 30, bottom: 0 }}>
+              <BarChart
+                layout="vertical"
+                data={unitPerformanceData}
+                margin={{ top: 10, right: 20, left: 30, bottom: 0 }}
+                onClick={(state: any) => {
+                  if (state?.activePayload?.[0]?.payload) {
+                    const item = state.activePayload[0].payload;
+                    if (item?.unit) {
+                      navigate(`/admin/manifestacoes?unidade=${encodeURIComponent(item.unit)}`);
+                    }
+                  }
+                }}
+                className="cursor-pointer"
+              >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E5E5" />
                 <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#737373' }} domain={[0, 8]} />
                 <YAxis dataKey="unit" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#171717' }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#171717', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }}
-                  formatter={(value: any) => [`${value} dias`, 'SLA Média']}
+                  formatter={(value: any) => [`${value} dias (Clique para filtrar)`, 'SLA Média']}
                 />
-                <Bar dataKey="slaReal" fill="#806300" radius={[0, 4, 4, 0]} name="SLA Real" />
+                <Bar dataKey="slaReal" fill="#806300" radius={[0, 4, 4, 0]} name="SLA Real" className="cursor-pointer hover:opacity-80 transition-opacity" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -396,8 +445,11 @@ export function ReportsAnalyticsPage() {
             <h3 className="text-sm font-bold font-heading text-[#0A0A0A] flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#806300]" />
               Detalhamento de Indicadores por Categoria
+              <span className="text-[10px] font-normal bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded-full border border-[#FCD34D]">
+                🖱️ Linhas clicáveis
+              </span>
             </h3>
-            <p className="text-[11px] text-[#737373]">Métricas de eficácia, volume acumulado e nível de risco predominante</p>
+            <p className="text-[11px] text-[#737373]">Clique em qualquer linha da tabela para visualizar o acervo correspondente</p>
           </div>
         </div>
 
@@ -415,7 +467,11 @@ export function ReportsAnalyticsPage() {
             </thead>
             <tbody className="divide-y divide-[#F5F5F5]">
               {categoryPerformanceTable.map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#FAFAFA] transition-colors">
+                <tr
+                  key={idx}
+                  onClick={() => navigate(`/admin/manifestacoes?categoryName=${encodeURIComponent(item.category)}`)}
+                  className="hover:bg-[#F5F5F5] transition-colors cursor-pointer"
+                >
                   <td className="py-3 px-4 font-semibold text-[#0A0A0A]">
                     {item.category}
                   </td>

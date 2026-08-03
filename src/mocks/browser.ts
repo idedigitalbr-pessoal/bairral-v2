@@ -10,6 +10,13 @@ export async function enableMocking() {
     try {
       return await worker.start({
         onUnhandledRequest: 'bypass',
+        quiet: true,
+        serviceWorker: {
+          url: '/mockServiceWorker.js',
+          options: {
+            updateViaCache: 'all',
+          },
+        },
       });
     } catch (error) {
       console.warn('MSW Service Worker não pôde ser iniciado no ambiente atual:', error);

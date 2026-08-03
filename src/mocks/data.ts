@@ -587,13 +587,13 @@ export const mockDashboardMetrics: DashboardMetrics = {
   monthlyComparisonPercentage: 12.4,
 
   periodVolume: [
-    { date: '2026-07-26', label: '26/07', count: 3, resolved: 2 },
-    { date: '2026-07-27', label: '27/07', count: 6, resolved: 4 },
-    { date: '2026-07-28', label: '28/07', count: 4, resolved: 3 },
-    { date: '2026-07-29', label: '29/07', count: 8, resolved: 5 },
-    { date: '2026-07-30', label: '30/07', count: 5, resolved: 4 },
-    { date: '2026-07-31', label: '31/07', count: 9, resolved: 7 },
-    { date: '2026-08-01', label: '01/08', count: 5, resolved: 3 },
+    { date: '2026-07-26', label: '26/07', abertos: 4, recentes: 2, concluidas: 2, count: 6, resolved: 2 },
+    { date: '2026-07-27', label: '27/07', abertos: 5, recentes: 3, concluidas: 4, count: 8, resolved: 4 },
+    { date: '2026-07-28', label: '28/07', abertos: 4, recentes: 2, concluidas: 3, count: 6, resolved: 3 },
+    { date: '2026-07-29', label: '29/07', abertos: 7, recentes: 4, concluidas: 5, count: 9, resolved: 5 },
+    { date: '2026-07-30', label: '30/07', abertos: 5, recentes: 3, concluidas: 4, count: 7, resolved: 4 },
+    { date: '2026-07-31', label: '31/07', abertos: 8, recentes: 5, concluidas: 7, count: 10, resolved: 7 },
+    { date: '2026-08-01', label: '01/08', abertos: 5, recentes: 2, concluidas: 3, count: 6, resolved: 3 },
   ],
 
   reportsByStatus: {

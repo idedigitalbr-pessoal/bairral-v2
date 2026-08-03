@@ -114,8 +114,49 @@ export function AdminReportsPage() {
     queryFilters.completedOnly = true;
   }
 
-  if (selectedStatus !== 'all') {
-    queryFilters.status = [selectedStatus];
+  // Filtros vindos dos gráficos e parâmetros de URL
+  const categoryIdParam = searchParams.get('categoryId') || searchParams.get('categoria');
+  const categoryNameParam = searchParams.get('categoryName');
+  const unitIdParam = searchParams.get('unitId') || searchParams.get('unidade');
+  const statusParam = searchParams.get('status');
+  const riskParam = searchParams.get('riskLevel') || searchParams.get('risco');
+  const regTypeParam = searchParams.get('registrationType') || searchParams.get('tipo');
+
+  if (categoryNameParam) {
+    pageTitle = `Categoria: ${categoryNameParam}`;
+    pageSubtitle = `Manifestações filtradas pela categoria ${categoryNameParam}`;
+    headerBadge = { label: `Categoria: ${categoryNameParam}`, variant: 'yellow' };
+    queryFilters.search = categoryNameParam;
+  } else if (categoryIdParam) {
+    pageTitle = 'Filtro por Categoria';
+    pageSubtitle = 'Manifestações filtradas pela categoria selecionada no gráfico';
+    headerBadge = { label: `Categoria selecionada`, variant: 'yellow' };
+    queryFilters.categoryId = categoryIdParam;
+  }
+
+  if (unitIdParam) {
+    pageTitle = pageTitle === 'Manifestações & Chamados' ? 'Filtro por Unidade Operacional' : pageTitle;
+    pageSubtitle = 'Manifestações filtradas por unidade de atendimento';
+    headerBadge = headerBadge || { label: 'Unidade selecionada', variant: 'info' };
+    queryFilters.unitId = unitIdParam;
+  }
+
+  if (statusParam) {
+    pageTitle = pageTitle === 'Manifestações & Chamados' ? `Filtro por Status (${statusParam})` : pageTitle;
+    headerBadge = headerBadge || { label: `Status: ${statusParam}`, variant: 'info' };
+    queryFilters.status = [statusParam];
+  }
+
+  if (riskParam) {
+    pageTitle = pageTitle === 'Manifestações & Chamados' ? `Filtro por Nível de Risco (${riskParam})` : pageTitle;
+    headerBadge = headerBadge || { label: `Risco: ${riskParam}`, variant: riskParam === 'CRITICAL' || riskParam === 'HIGH' ? 'danger' : 'yellow' };
+    queryFilters.riskLevel = [riskParam];
+  }
+
+  if (regTypeParam) {
+    const isAnon = regTypeParam === 'ANONYMOUS' || regTypeParam === 'Anônimas';
+    headerBadge = headerBadge || { label: isAnon ? 'Apenas Anônimas' : 'Apenas Identificadas', variant: 'info' };
+    queryFilters.registrationType = isAnon ? 'ANONYMOUS' : 'IDENTIFIED';
   }
 
   if (selectedRisk !== 'all') {
